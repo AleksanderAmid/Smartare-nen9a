@@ -11,19 +11,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Quiz state
     let currentSlide = 0;
     const totalSlides = 12; // 12 slides in total (1-12)
-    const userAnswers = Array(9).fill(null); // 9 questions (slides 3-11)
+    const userAnswers = Array(9).fill(null).map(() => []); // 9 questions (slides 3-11), now storing arrays for multiple answers
+    
+    // Touch tracking variables for swipe detection
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    // Mouse tracking variables for swipe detection
+    let mouseStartX = 0;
+    let mouseEndX = 0;
+    let isMouseDown = false;
     
     // Correct answers (from Facit.png)
     const correctAnswers = [
-        4, // Question 1 (Slide 3)
-        3, // Question 2 (Slide 4)
-        5, // Question 3 (Slide 5)
-        3, // Question 4 (Slide 6)
-        5, // Question 5 (Slide 7)
-        4, // Question 6 (Slide 8)
-        3, // Question 7 (Slide 9)
-        4, // Question 8 (Slide 10)
-        2  // Question 9 (Slide 11)
+        [1], // Question 1 (Slide 3)
+        [3], // Question 2 (Slide 4)
+        [4], // Question 3 (Slide 5)
+        [1, 4], // Question 4 (Slide 6) - Multiple answers
+        [4], // Question 5 (Slide 7)
+        [2], // Question 6 (Slide 8)
+        [3], // Question 7 (Slide 9)
+        [4], // Question 8 (Slide 10)
+        [2, 4]  // Question 9 (Slide 11) - Multiple answers
     ];
 
     // Answer options text (based on the images)
@@ -126,6 +135,15 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.addEventListener('click', submitQuiz);
         restartBtn.addEventListener('click', restartQuiz);
         
+        // Add touch event listeners for swipe functionality
+        slideContainer.addEventListener('touchstart', handleTouchStart, false);
+        slideContainer.addEventListener('touchend', handleTouchEnd, false);
+        
+        // Add mouse event listeners for swipe-like functionality on desktop
+        slideContainer.addEventListener('mousedown', handleMouseDown, false);
+        slideContainer.addEventListener('mouseup', handleMouseUp, false);
+        slideContainer.addEventListener('mouseleave', handleMouseLeave, false);
+        
         // Handle window resize to adjust answer options positioning
         window.addEventListener('resize', adjustOptionsPositions);
         
@@ -210,6 +228,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             slide.appendChild(img);
             
+            // Add swipe indicators (except for the last slide)
+            if (i < totalSlides) {
+                // Left indicator (for going back)
+                const leftIndicator = document.createElement('div');
+                leftIndicator.className = 'swipe-indicator swipe-indicator-left';
+                slide.appendChild(leftIndicator);
+                
+                // Right indicator (for going forward)
+                const rightIndicator = document.createElement('div');
+                rightIndicator.className = 'swipe-indicator swipe-indicator-right';
+                slide.appendChild(rightIndicator);
+            }
+            
             // Add answer options for question slides (3-11)
             if (i >= 3 && i <= 11) {
                 const questionIndex = i - 3;
@@ -268,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     options.forEach(opt => {
                         const option = document.createElement('div');
-                        option.className = `option ${userAnswers[questionIndex] === opt.value ? 'selected' : ''}`;
+                        option.className = `option ${userAnswers[questionIndex].includes(opt.value) ? 'selected' : ''}`;
                         option.dataset.value = opt.value;
                         option.textContent = `${opt.value}. ${opt.text}`;
                         
@@ -280,10 +311,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         answerOptions.appendChild(option);
                     });
                 } else {
+                    // Add instruction for multiple selection questions
+                    if (i === 6 || i === 11) {
+                        const instruction = document.createElement('div');
+                        instruction.className = 'instruction';
+                        instruction.textContent = 'Välj alla korrekta alternativ (flera svar kan vara rätt).';
+                        answerOptions.appendChild(instruction);
+                    }
+                    
                     // Create option elements for other slides
                     for (let j = 1; j <= 5; j++) {
                         const option = document.createElement('div');
-                        option.className = `option ${userAnswers[questionIndex] === j ? 'selected' : ''}`;
+                        option.className = `option ${userAnswers[questionIndex].includes(j) ? 'selected' : ''}`;
                         option.dataset.value = j;
                         option.textContent = `${j}. ${answerOptionsText[i][j-1]}`;
                         
@@ -305,14 +344,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Select an answer
     function selectAnswer(questionIndex, value) {
-        userAnswers[questionIndex] = value;
+        // For questions 4 and 9 (indices 3 and 8), allow multiple selections
+        if (questionIndex === 3 || questionIndex === 8) {
+            // If the value is already selected, remove it
+            const valueIndex = userAnswers[questionIndex].indexOf(value);
+            if (valueIndex !== -1) {
+                userAnswers[questionIndex].splice(valueIndex, 1);
+            } else {
+                // Otherwise add it
+                userAnswers[questionIndex].push(value);
+            }
+        } else {
+            // For other questions, just set the single answer
+            userAnswers[questionIndex] = [value];
+        }
         
-        // Update UI to show selected option
+        // Update UI to show selected options
         const options = document.querySelectorAll(`.slide[data-slide-index="${questionIndex + 3}"] .option`);
         options.forEach(option => {
-            option.classList.remove('selected');
-            if (parseInt(option.dataset.value) === value) {
-                option.classList.add('selected');
+            const optionValue = parseInt(option.dataset.value);
+            if (questionIndex === 3 || questionIndex === 8) {
+                // For multiple selection questions, toggle the selected class
+                if (userAnswers[questionIndex].includes(optionValue)) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            } else {
+                // For single selection questions
+                option.classList.remove('selected');
+                if (userAnswers[questionIndex].includes(optionValue)) {
+                    option.classList.add('selected');
+                }
             }
         });
     }
@@ -351,27 +414,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update navigation buttons based on current slide
     function updateNavButtons() {
-        // First slide: only show "Next" button with "Gå till Quiz" text
+        // Hide all navigation buttons (we'll use swipe instead)
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        
+        // First slide
         if (currentSlide === 0) {
-            prevBtn.style.display = 'none';
-            nextBtn.style.display = 'block';
-            nextBtn.textContent = 'Gå till Quiz';
             submitBtn.style.display = 'none';
             scoreElement.style.display = 'none';
             restartBtn.style.display = 'none';
         } 
-        // Second-to-last slide (slide 11): show "Prev" and "Submit" buttons, hide "Next" button
+        // Second-to-last slide (slide 11)
         else if (currentSlide === totalSlides - 2) {
-            prevBtn.style.display = 'block';
-            nextBtn.style.display = 'none'; // Hide "Bläddra fram" button
             submitBtn.style.display = 'block';
             scoreElement.style.display = 'none';
             restartBtn.style.display = 'none';
         }
-        // Last slide: hide "Prev" button, show score and "Testa igen" button
+        // Last slide: show score and "Testa igen" button
         else if (currentSlide === totalSlides - 1) {
-            prevBtn.style.display = 'none'; // Hide "Bläddra bak" button
-            nextBtn.style.display = 'none';
             submitBtn.style.display = 'none';
             restartBtn.style.display = 'block'; // Show "Testa igen" button
             
@@ -382,11 +442,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 scoreElement.style.display = 'none';
             }
         } 
-        // Middle slides: show both "Prev" and "Next" buttons
+        // Middle slides
         else {
-            prevBtn.style.display = 'block';
-            nextBtn.style.display = 'block';
-            nextBtn.textContent = 'Bläddra fram';
             submitBtn.style.display = 'none';
             scoreElement.style.display = 'none';
             restartBtn.style.display = 'none';
@@ -399,8 +456,22 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Calculate score
         for (let i = 0; i < userAnswers.length; i++) {
-            if (userAnswers[i] === correctAnswers[i]) {
-                score++;
+            // For questions with multiple answers (4 and 9)
+            if (i === 3 || i === 8) {
+                // Check if arrays have the same elements (regardless of order)
+                const userSet = new Set(userAnswers[i]);
+                const correctSet = new Set(correctAnswers[i]);
+                
+                // Check if user selected all correct answers and no incorrect ones
+                if (userSet.size === correctSet.size && 
+                    correctAnswers[i].every(answer => userSet.has(answer))) {
+                    score++;
+                }
+            } else {
+                // For questions with single answers
+                if (userAnswers[i].length === 1 && userAnswers[i][0] === correctAnswers[i][0]) {
+                    score++;
+                }
             }
         }
         
@@ -416,12 +487,70 @@ document.addEventListener('DOMContentLoaded', function() {
     // Restart the quiz
     function restartQuiz() {
         currentSlide = 0;
-        userAnswers.fill(null);
+        // Reset user answers to empty arrays
+        for (let i = 0; i < userAnswers.length; i++) {
+            userAnswers[i] = [];
+        }
         scoreElement.textContent = '';
         scoreElement.style.display = 'none';
         loadSlides();
         updateSlide();
         updateNavButtons();
+    }
+
+    // Handle touch start event
+    function handleTouchStart(event) {
+        touchStartX = event.touches[0].clientX;
+    }
+    
+    // Handle touch end event
+    function handleTouchEnd(event) {
+        touchEndX = event.changedTouches[0].clientX;
+        handleSwipe(touchEndX - touchStartX);
+    }
+    
+    // Handle mouse down event
+    function handleMouseDown(event) {
+        isMouseDown = true;
+        mouseStartX = event.clientX;
+        slideContainer.classList.add('grabbing'); // Add grabbing cursor
+    }
+    
+    // Handle mouse up event
+    function handleMouseUp(event) {
+        if (isMouseDown) {
+            mouseEndX = event.clientX;
+            handleSwipe(mouseEndX - mouseStartX);
+            isMouseDown = false;
+            slideContainer.classList.remove('grabbing'); // Remove grabbing cursor
+        }
+    }
+    
+    // Handle mouse leave event (when cursor leaves the container)
+    function handleMouseLeave(event) {
+        if (isMouseDown) {
+            mouseEndX = event.clientX;
+            handleSwipe(mouseEndX - mouseStartX);
+            isMouseDown = false;
+            slideContainer.classList.remove('grabbing'); // Remove grabbing cursor
+        }
+    }
+    
+    // Process swipe gesture
+    function handleSwipe(swipeDistance) {
+        const swipeThreshold = 50; // Minimum distance required for a swipe
+        
+        if (swipeDistance > swipeThreshold) {
+            // Swipe right - go to previous slide
+            goToPrevSlide();
+        } else if (swipeDistance < -swipeThreshold) {
+            // Swipe left - go to next slide or submit if on second-to-last slide
+            if (currentSlide === totalSlides - 2) {
+                submitQuiz();
+            } else {
+                goToNextSlide();
+            }
+        }
     }
 
     // Start the quiz
