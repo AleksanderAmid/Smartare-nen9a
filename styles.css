@@ -21,78 +21,15 @@ body {
 }
 
 #quiz-container {
-    max-width: 800px;
-    margin: 0 auto;
     background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    position: relative;
-    cursor: grab;
-}
-
-#quiz-container:active {
-    cursor: grabbing;
-}
-
-/* Swipe indicators */
-.swipe-indicator {
-    position: absolute;
-    top: 50%;
-    width: 40px;
-    height: 40px;
-    background-color: rgba(0, 123, 255, 0.7);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    transform: translateY(-50%);
-    opacity: 0.5;
-    transition: opacity 0.3s, transform 0.3s;
-    z-index: 10;
-    pointer-events: none; /* Make sure it doesn't interfere with swipe events */
-}
-
-.swipe-indicator-left {
-    left: 10px;
-}
-
-.swipe-indicator-right {
-    right: 10px;
-}
-
-#slide-container:hover .swipe-indicator {
-    opacity: 0.8;
-    transform: translateY(-50%) scale(1.1);
-}
-
-/* Remove the previous ::before and ::after selectors since we're using JS now */
-#slide-container::before,
-#slide-container::after {
-    content: none;
-}
-
-/* These selectors are no longer needed since we're handling indicators with JavaScript */
-/* Hide swipe indicators on first and last slides */
-.slide[data-slide-index="1"].active ~ #slide-container::before,
-.slide[data-slide-index="12"].active ~ #slide-container::after {
-    display: none;
-}
-
-/* Fix for swipe indicators on first and last slides */
-#slide-container:has(.slide[data-slide-index="1"].active)::before {
-    display: none;
-}
-
-#slide-container:has(.slide[data-slide-index="12"].active)::after {
-    display: none;
 }
 
 #slide-container {
+    width: 100%;
     position: relative;
-    overflow: hidden;
 }
 
 .slide {
@@ -172,47 +109,6 @@ body {
     padding: 20px;
     background-color: #f9f9f9;
     border-top: 1px solid #ddd;
-    /* Hide navigation by default */
-    max-height: 0;
-    overflow: hidden;
-    padding: 0;
-    transition: max-height 0.3s ease, padding 0.3s ease;
-}
-
-#navigation.visible {
-    max-height: 100px;
-    padding: 20px;
-}
-
-/* Menu toggle button */
-.menu-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 100;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s, transform 0.3s;
-}
-
-.menu-toggle:hover {
-    background-color: #0056b3;
-    transform: scale(1.05);
-}
-
-.menu-toggle.active {
-    background-color: #0056b3;
-    transform: rotate(90deg);
 }
 
 .nav-btn {
@@ -268,14 +164,6 @@ body {
     background-color: #218838;
 }
 
-#submit-btn {
-    background-color: #28a745;
-}
-
-#submit-btn:hover {
-    background-color: #218838;
-}
-
 /* Responsive adjustments */
 @media (max-width: 600px) {
     body {
@@ -308,132 +196,4 @@ body {
 .slide[data-slide-index="12"] img:hover {
     transform: scale(1.01);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-/* Swipe instruction */
-.swipe-instruction {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 16px;
-    z-index: 100;
-    text-align: center;
-    animation: bounce 2s infinite;
-    transition: opacity 1s;
-    margin-right: 80px;
-}
-
-.swipe-instruction span {
-    font-weight: bold;
-    color: #007bff;
-    margin: 0 5px;
-}
-
-.swipe-instruction.fade-out {
-    opacity: 0;
-}
-
-@keyframes bounce {
-    0%, 100% {
-        transform: translateX(-50%) translateY(0);
-    }
-    50% {
-        transform: translateX(-50%) translateY(-10px);
-    }
-}
-
-@media (max-width: 600px) {
-    .swipe-instruction {
-        bottom: 80px;
-        margin-right: 0;
-    }
-}
-
-/* Always show submit button on second-to-last slide */
-.slide[data-slide-index="11"].active ~ #navigation #submit-btn {
-    display: block !important;
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 90;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    padding: 15px 30px;
-    font-size: 18px;
-    background-color: #28a745;
-}
-
-.slide[data-slide-index="11"].active ~ #navigation #submit-btn:hover {
-    background-color: #218838;
-}
-
-/* Adjust position when menu is visible */
-#navigation.visible #submit-btn {
-    position: static !important;
-    transform: none !important;
-    box-shadow: none;
-    padding: 12px 24px;
-    font-size: 16px;
-}
-
-@media (max-width: 600px) {
-    .slide[data-slide-index="11"].active ~ #navigation #submit-btn {
-        bottom: 80px; /* Move up on small screens to avoid overlap with menu toggle */
-    }
-    
-    .swipe-instruction {
-        bottom: 80px; /* Move up on small screens */
-        margin-right: 0;
-    }
-}
-
-/* Submit instruction */
-.submit-instruction {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 16px;
-    z-index: 100;
-    text-align: center;
-    transition: opacity 0.3s, transform 0.3s;
-}
-
-.submit-instruction span {
-    font-weight: bold;
-    color: #28a745;
-    margin: 0 5px;
-}
-
-.submit-instruction.pulse {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        transform: translateX(-50%) scale(1);
-    }
-    50% {
-        transform: translateX(-50%) scale(1.05);
-    }
-    100% {
-        transform: translateX(-50%) scale(1);
-    }
-}
-
-@media (max-width: 600px) {
-    .submit-instruction {
-        bottom: 140px; /* Move up further on small screens */
-        font-size: 14px;
-        padding: 8px 16px;
-    }
 } 
