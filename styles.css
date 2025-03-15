@@ -172,6 +172,47 @@ body {
     padding: 20px;
     background-color: #f9f9f9;
     border-top: 1px solid #ddd;
+    /* Hide navigation by default */
+    max-height: 0;
+    overflow: hidden;
+    padding: 0;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+#navigation.visible {
+    max-height: 100px;
+    padding: 20px;
+}
+
+/* Menu toggle button */
+.menu-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.menu-toggle:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.menu-toggle.active {
+    background-color: #0056b3;
+    transform: rotate(90deg);
 }
 
 .nav-btn {
@@ -227,6 +268,14 @@ body {
     background-color: #218838;
 }
 
+#submit-btn {
+    background-color: #28a745;
+}
+
+#submit-btn:hover {
+    background-color: #218838;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
     body {
@@ -276,6 +325,7 @@ body {
     text-align: center;
     animation: bounce 2s infinite;
     transition: opacity 1s;
+    margin-right: 80px;
 }
 
 .swipe-instruction span {
@@ -294,5 +344,96 @@ body {
     }
     50% {
         transform: translateX(-50%) translateY(-10px);
+    }
+}
+
+@media (max-width: 600px) {
+    .swipe-instruction {
+        bottom: 80px;
+        margin-right: 0;
+    }
+}
+
+/* Always show submit button on second-to-last slide */
+.slide[data-slide-index="11"].active ~ #navigation #submit-btn {
+    display: block !important;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 90;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 15px 30px;
+    font-size: 18px;
+    background-color: #28a745;
+}
+
+.slide[data-slide-index="11"].active ~ #navigation #submit-btn:hover {
+    background-color: #218838;
+}
+
+/* Adjust position when menu is visible */
+#navigation.visible #submit-btn {
+    position: static !important;
+    transform: none !important;
+    box-shadow: none;
+    padding: 12px 24px;
+    font-size: 16px;
+}
+
+@media (max-width: 600px) {
+    .slide[data-slide-index="11"].active ~ #navigation #submit-btn {
+        bottom: 80px; /* Move up on small screens to avoid overlap with menu toggle */
+    }
+    
+    .swipe-instruction {
+        bottom: 80px; /* Move up on small screens */
+        margin-right: 0;
+    }
+}
+
+/* Submit instruction */
+.submit-instruction {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 16px;
+    z-index: 100;
+    text-align: center;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.submit-instruction span {
+    font-weight: bold;
+    color: #28a745;
+    margin: 0 5px;
+}
+
+.submit-instruction.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.05);
+    }
+    100% {
+        transform: translateX(-50%) scale(1);
+    }
+}
+
+@media (max-width: 600px) {
+    .submit-instruction {
+        bottom: 140px; /* Move up further on small screens */
+        font-size: 14px;
+        padding: 8px 16px;
     }
 } 

@@ -7,6 +7,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const scoreElement = document.getElementById('score');
     const restartBtn = document.getElementById('restart-btn');
     const quizContainer = document.getElementById('quiz-container');
+    const navigation = document.getElementById('navigation');
+    
+    // Add menu toggle button
+    const menuToggle = document.createElement('button');
+    menuToggle.id = 'menu-toggle';
+    menuToggle.className = 'menu-toggle';
+    menuToggle.innerHTML = '☰';
+    menuToggle.title = 'Visa/dölj knappar';
+    quizContainer.appendChild(menuToggle);
+    
+    // Menu toggle state
+    let menuVisible = false;
+    
+    // Toggle menu visibility
+    menuToggle.addEventListener('click', function() {
+        menuVisible = !menuVisible;
+        navigation.classList.toggle('visible', menuVisible);
+        menuToggle.classList.toggle('active', menuVisible);
+    });
 
     // Quiz state
     let currentSlide = 0;
@@ -441,6 +460,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Go to next slide
     function goToNextSlide() {
+        // Prevent swiping from second-to-last slide to last slide
+        // User must click the submit button to proceed
+        if (currentSlide === totalSlides - 2) {
+            return;
+        }
+        
         if (currentSlide < totalSlides - 1) {
             currentSlide++;
             updateSlide();
@@ -460,6 +485,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update swipe indicators based on current slide
         updateSwipeIndicators();
+        
+        // Show submit instruction on second-to-last slide
+        if (currentSlide === totalSlides - 2) {
+            showSubmitInstruction();
+        } else {
+            // Remove any existing submit instruction
+            const existingInstruction = document.querySelector('.submit-instruction');
+            if (existingInstruction) existingInstruction.remove();
+        }
         
         // Adjust the position of answer options for the current slide
         setTimeout(adjustOptionsPositions, 10);
@@ -484,7 +518,8 @@ document.addEventListener('DOMContentLoaded', function() {
             slideContainer.appendChild(leftIndicator);
         }
         
-        if (currentSlide < totalSlides - 1) {
+        // Don't show right indicator on second-to-last slide (must click submit)
+        if (currentSlide < totalSlides - 2) {
             const rightIndicator = document.createElement('div');
             rightIndicator.className = 'swipe-indicator swipe-indicator-right';
             rightIndicator.innerHTML = '→';
@@ -492,41 +527,97 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Show instruction to click submit button
+    function showSubmitInstruction() {
+        // Remove any existing instruction
+        const existingInstruction = document.querySelector('.submit-instruction');
+        if (existingInstruction) existingInstruction.remove();
+        
+        // Create new instruction
+        const instruction = document.createElement('div');
+        instruction.className = 'submit-instruction';
+        instruction.innerHTML = 'Klicka på <span>Lämna in och rätta</span> för att se ditt resultat';
+        
+        // Add the instruction to the quiz container
+        quizContainer.appendChild(instruction);
+        
+        // Animate the instruction to draw attention to the submit button
+        setTimeout(() => {
+            instruction.classList.add('pulse');
+        }, 500);
+    }
+
     // Update navigation buttons based on current slide
     function updateNavButtons() {
-        // Hide all navigation buttons since we're using swipe gestures
-        prevBtn.style.display = 'none';
-        nextBtn.style.display = 'none';
-        
-        // First slide
-        if (currentSlide === 0) {
-            submitBtn.style.display = 'none';
-            scoreElement.style.display = 'none';
-            restartBtn.style.display = 'none';
-        }
-        // Second-to-last slide (slide 11): show "Submit" button
-        else if (currentSlide === totalSlides - 2) {
-            submitBtn.style.display = 'block';
-            scoreElement.style.display = 'none';
-            restartBtn.style.display = 'none';
-        }
-        // Last slide: show score and "Testa igen" button
-        else if (currentSlide === totalSlides - 1) {
-            submitBtn.style.display = 'none';
-            restartBtn.style.display = 'block'; // Show "Testa igen" button
-            
-            // If user has submitted, show score
-            if (scoreElement.textContent) {
-                scoreElement.style.display = 'block';
-            } else {
+        // Show navigation buttons if menu is visible
+        if (menuVisible) {
+            // First slide
+            if (currentSlide === 0) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'block';
+                nextBtn.textContent = 'Gå till Quiz';
+                submitBtn.style.display = 'none';
                 scoreElement.style.display = 'none';
+                restartBtn.style.display = 'none';
             }
-        } 
-        // Middle slides
-        else {
-            submitBtn.style.display = 'none';
-            scoreElement.style.display = 'none';
-            restartBtn.style.display = 'none';
+            // Second-to-last slide (slide 11): show "Prev" and "Submit" buttons
+            else if (currentSlide === totalSlides - 2) {
+                prevBtn.style.display = 'block';
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+                scoreElement.style.display = 'none';
+                restartBtn.style.display = 'none';
+            }
+            // Last slide: show score and "Testa igen" button
+            else if (currentSlide === totalSlides - 1) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'none';
+                restartBtn.style.display = 'block';
+                
+                // If user has submitted, show score
+                if (scoreElement.textContent) {
+                    scoreElement.style.display = 'block';
+                } else {
+                    scoreElement.style.display = 'none';
+                }
+            } 
+            // Middle slides
+            else {
+                prevBtn.style.display = 'block';
+                nextBtn.style.display = 'block';
+                nextBtn.textContent = 'Bläddra fram';
+                submitBtn.style.display = 'none';
+                scoreElement.style.display = 'none';
+                restartBtn.style.display = 'none';
+            }
+        } else {
+            // Hide all navigation buttons when menu is not visible
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+            
+            // Always show submit button on second-to-last slide
+            if (currentSlide === totalSlides - 2) {
+                submitBtn.style.display = 'block';
+                scoreElement.style.display = 'none';
+                restartBtn.style.display = 'none';
+            }
+            // Last slide: always show score and restart button
+            else if (currentSlide === totalSlides - 1) {
+                submitBtn.style.display = 'none';
+                restartBtn.style.display = 'block';
+                
+                // If user has submitted, show score
+                if (scoreElement.textContent) {
+                    scoreElement.style.display = 'block';
+                } else {
+                    scoreElement.style.display = 'none';
+                }
+            } else {
+                submitBtn.style.display = 'none';
+                scoreElement.style.display = 'none';
+                restartBtn.style.display = 'none';
+            }
         }
     }
 
