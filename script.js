@@ -120,11 +120,106 @@ document.addEventListener('DOMContentLoaded', function() {
         loadSlides();
         updateNavButtons();
         
+        // Add swipe instruction
+        addSwipeInstruction();
+        
         // Event listeners
         prevBtn.addEventListener('click', goToPrevSlide);
         nextBtn.addEventListener('click', goToNextSlide);
         submitBtn.addEventListener('click', submitQuiz);
         restartBtn.addEventListener('click', restartQuiz);
+        
+        // Add touch event listeners for swipe functionality
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        quizContainer.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+        
+        quizContainer.addEventListener('touchmove', function(e) {
+            // Check if horizontal swipe is happening
+            const touchMoveX = e.changedTouches[0].screenX;
+            const xDiff = touchMoveX - touchStartX;
+            
+            // If it's a significant horizontal swipe, prevent default scrolling
+            if (Math.abs(xDiff) > 10) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        quizContainer.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, false);
+        
+        // Add mouse events for desktop swipe-like functionality
+        let mouseStartX = 0;
+        let mouseEndX = 0;
+        let isMouseDown = false;
+        
+        quizContainer.addEventListener('mousedown', function(e) {
+            isMouseDown = true;
+            mouseStartX = e.clientX;
+        }, false);
+        
+        quizContainer.addEventListener('mousemove', function(e) {
+            if (!isMouseDown) return;
+            mouseEndX = e.clientX;
+        }, false);
+        
+        quizContainer.addEventListener('mouseup', function(e) {
+            if (!isMouseDown) return;
+            mouseEndX = e.clientX;
+            isMouseDown = false;
+            handleMouseSwipe();
+        }, false);
+        
+        quizContainer.addEventListener('mouseleave', function(e) {
+            if (!isMouseDown) return;
+            mouseEndX = e.clientX;
+            isMouseDown = false;
+            handleMouseSwipe();
+        }, false);
+        
+        // Add keyboard navigation for accessibility
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                goToPrevSlide();
+            } else if (e.key === 'ArrowRight') {
+                goToNextSlide();
+            }
+        });
+        
+        // Handle mouse swipe gesture
+        function handleMouseSwipe() {
+            const swipeThreshold = 100; // Slightly higher threshold for mouse
+            
+            if (mouseEndX < mouseStartX - swipeThreshold) {
+                // Swipe left - go to next slide
+                goToNextSlide();
+            }
+            
+            if (mouseEndX > mouseStartX + swipeThreshold) {
+                // Swipe right - go to previous slide
+                goToPrevSlide();
+            }
+        }
+        
+        // Handle swipe gesture
+        function handleSwipe() {
+            const swipeThreshold = 50; // Minimum distance required for a swipe
+            
+            if (touchEndX < touchStartX - swipeThreshold) {
+                // Swipe left - go to next slide
+                goToNextSlide();
+            }
+            
+            if (touchEndX > touchStartX + swipeThreshold) {
+                // Swipe right - go to previous slide
+                goToPrevSlide();
+            }
+        }
         
         // Handle window resize to adjust answer options positioning
         window.addEventListener('resize', adjustOptionsPositions);
@@ -152,6 +247,24 @@ document.addEventListener('DOMContentLoaded', function() {
         adjustOptionsPositions();
         setTimeout(adjustOptionsPositions, 50);
         setTimeout(adjustOptionsPositions, 200);
+    }
+    
+    // Add a visual instruction to help users understand they can swipe
+    function addSwipeInstruction() {
+        const instruction = document.createElement('div');
+        instruction.className = 'swipe-instruction';
+        instruction.innerHTML = 'Svep <span>←</span> eller <span>→</span> för att navigera';
+        
+        // Add the instruction to the quiz container
+        quizContainer.appendChild(instruction);
+        
+        // Hide the instruction after 5 seconds
+        setTimeout(() => {
+            instruction.classList.add('fade-out');
+            setTimeout(() => {
+                instruction.remove();
+            }, 1000);
+        }, 5000);
     }
     
     // Adjust positions of all answer options
@@ -345,33 +458,60 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        // Update swipe indicators based on current slide
+        updateSwipeIndicators();
+        
         // Adjust the position of answer options for the current slide
         setTimeout(adjustOptionsPositions, 10);
+    }
+    
+    // Update swipe indicators based on current slide
+    function updateSwipeIndicators() {
+        const slideContainer = document.getElementById('slide-container');
+        
+        // Remove any existing indicators
+        const existingLeftIndicator = document.querySelector('.swipe-indicator-left');
+        const existingRightIndicator = document.querySelector('.swipe-indicator-right');
+        
+        if (existingLeftIndicator) existingLeftIndicator.remove();
+        if (existingRightIndicator) existingRightIndicator.remove();
+        
+        // Create new indicators
+        if (currentSlide > 0) {
+            const leftIndicator = document.createElement('div');
+            leftIndicator.className = 'swipe-indicator swipe-indicator-left';
+            leftIndicator.innerHTML = '←';
+            slideContainer.appendChild(leftIndicator);
+        }
+        
+        if (currentSlide < totalSlides - 1) {
+            const rightIndicator = document.createElement('div');
+            rightIndicator.className = 'swipe-indicator swipe-indicator-right';
+            rightIndicator.innerHTML = '→';
+            slideContainer.appendChild(rightIndicator);
+        }
     }
 
     // Update navigation buttons based on current slide
     function updateNavButtons() {
-        // First slide: only show "Next" button with "Gå till Quiz" text
+        // Hide all navigation buttons since we're using swipe gestures
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        
+        // First slide
         if (currentSlide === 0) {
-            prevBtn.style.display = 'none';
-            nextBtn.style.display = 'block';
-            nextBtn.textContent = 'Gå till Quiz';
             submitBtn.style.display = 'none';
             scoreElement.style.display = 'none';
             restartBtn.style.display = 'none';
-        } 
-        // Second-to-last slide (slide 11): show "Prev" and "Submit" buttons, hide "Next" button
+        }
+        // Second-to-last slide (slide 11): show "Submit" button
         else if (currentSlide === totalSlides - 2) {
-            prevBtn.style.display = 'block';
-            nextBtn.style.display = 'none'; // Hide "Bläddra fram" button
             submitBtn.style.display = 'block';
             scoreElement.style.display = 'none';
             restartBtn.style.display = 'none';
         }
-        // Last slide: hide "Prev" button, show score and "Testa igen" button
+        // Last slide: show score and "Testa igen" button
         else if (currentSlide === totalSlides - 1) {
-            prevBtn.style.display = 'none'; // Hide "Bläddra bak" button
-            nextBtn.style.display = 'none';
             submitBtn.style.display = 'none';
             restartBtn.style.display = 'block'; // Show "Testa igen" button
             
@@ -382,11 +522,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 scoreElement.style.display = 'none';
             }
         } 
-        // Middle slides: show both "Prev" and "Next" buttons
+        // Middle slides
         else {
-            prevBtn.style.display = 'block';
-            nextBtn.style.display = 'block';
-            nextBtn.textContent = 'Bläddra fram';
             submitBtn.style.display = 'none';
             scoreElement.style.display = 'none';
             restartBtn.style.display = 'none';
