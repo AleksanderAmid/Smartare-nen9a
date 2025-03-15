@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "celebrated",
             "stopped",
             "divided",
-            "imagined",
+            "taste",
             "painted"
         ],
         // Slide 7 (Question 5) - Where is chemical energy stored in photosynthesis?
