@@ -228,19 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             slide.appendChild(img);
             
-            // Add swipe indicators (except for the last slide)
-            if (i < totalSlides) {
-                // Left indicator (for going back)
-                const leftIndicator = document.createElement('div');
-                leftIndicator.className = 'swipe-indicator swipe-indicator-left';
-                slide.appendChild(leftIndicator);
-                
-                // Right indicator (for going forward)
-                const rightIndicator = document.createElement('div');
-                rightIndicator.className = 'swipe-indicator swipe-indicator-right';
-                slide.appendChild(rightIndicator);
-            }
-            
             // Add answer options for question slides (3-11)
             if (i >= 3 && i <= 11) {
                 const questionIndex = i - 3;
@@ -555,4 +542,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Start the quiz
     initQuiz();
+    
+    // Show swipe notification on first slide change
+    let hasShownSwipeNotification = false;
+    
+    function showSwipeNotification() {
+        if (!hasShownSwipeNotification) {
+            hasShownSwipeNotification = true;
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'swipe-notification';
+            notification.textContent = 'Svep åt höger eller vänster för att navigera mellan sidor';
+            document.body.appendChild(notification);
+            
+            // Show notification with animation
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Hide and remove notification after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 500);
+            }, 5000);
+        }
+    }
+    
+    // Update the goToNextSlide and goToPrevSlide functions to show notification
+    const originalGoToNextSlide = goToNextSlide;
+    goToNextSlide = function() {
+        originalGoToNextSlide();
+        showSwipeNotification();
+    };
+    
+    const originalGoToPrevSlide = goToPrevSlide;
+    goToPrevSlide = function() {
+        originalGoToPrevSlide();
+        showSwipeNotification();
+    };
+    
+    // Show notification when quiz starts (after a short delay)
+    setTimeout(showSwipeNotification, 1000);
 }); 

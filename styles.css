@@ -207,55 +207,28 @@ body {
     cursor: grabbing;
 }
 
-/* Swipe indicators */
-.swipe-indicator {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    background-color: rgba(255, 255, 255, 0.7);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    opacity: 0.7;
-    transition: opacity 0.3s, transform 0.3s;
-    z-index: 10;
-    pointer-events: none;
-}
-
-.swipe-indicator:before {
-    content: '';
-    width: 12px;
-    height: 12px;
-    border-top: 3px solid #007bff;
-    border-right: 3px solid #007bff;
-    display: block;
-}
-
-.swipe-indicator-left {
-    left: 10px;
-}
-
-.swipe-indicator-left:before {
-    transform: rotate(-135deg);
-}
-
-.swipe-indicator-right {
-    right: 10px;
-}
-
-.swipe-indicator-right:before {
-    transform: rotate(45deg);
-}
-
-/* Hide indicators on first and last slides */
-.slide[data-slide-index="1"] .swipe-indicator-left,
-.slide[data-slide-index="12"] .swipe-indicator-right {
+/* Swipe notification */
+.swipe-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
     opacity: 0;
-    transform: translateY(-50%) scale(0.8);
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    text-align: center;
+    max-width: 90%;
+}
+
+.swipe-notification.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
 }
 
 /* Style for multiple selection questions */
