@@ -198,9 +198,77 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Set the height, ensuring it doesn't exceed the calculated maximum
                     answerOptions.style.height = `${Math.min(imgHeight * position.height, maxHeight)}px`;
+                    
+                    // Check if the answer options container has overflow and apply the class if needed
+                    checkForOverflow(answerOptions);
                 }
             }
         }
+    }
+    
+    // Check if the answer options container has overflow and apply the has-overflow class
+    function checkForOverflow(container) {
+        if (container.scrollHeight > container.clientHeight) {
+            container.classList.add('has-overflow');
+            
+            // Add a scroll indicator animation
+            showScrollIndicator(container);
+            
+            // Show the scroll indicator
+            const slide = container.closest('.slide');
+            const scrollIndicator = slide.querySelector('.scroll-indicator');
+            if (scrollIndicator) {
+                scrollIndicator.style.display = 'flex';
+            }
+        } else {
+            container.classList.remove('has-overflow');
+            
+            // Hide the scroll indicator
+            const slide = container.closest('.slide');
+            const scrollIndicator = slide.querySelector('.scroll-indicator');
+            if (scrollIndicator) {
+                scrollIndicator.style.display = 'none';
+            }
+        }
+        
+        // Also listen for scroll events to hide the indicator when user has scrolled
+        container.addEventListener('scroll', function() {
+            if (container.scrollTop > 10) { // If user has scrolled a bit
+                const slide = container.closest('.slide');
+                const scrollIndicator = slide.querySelector('.scroll-indicator');
+                if (scrollIndicator) {
+                    // Fade out the indicator
+                    scrollIndicator.style.opacity = '0';
+                }
+            }
+        }, { once: true }); // Only trigger once
+    }
+    
+    // Show a subtle scroll animation to indicate scrolling is possible
+    function showScrollIndicator(container) {
+        // Only show the indicator if the container is visible (active slide)
+        if (!container.closest('.slide').classList.contains('active')) return;
+        
+        // Add a gentle scroll animation to hint that there's more content
+        const currentScroll = container.scrollTop;
+        
+        // If already scrolled, don't animate
+        if (currentScroll > 0) return;
+        
+        // Gently scroll down a bit and back to show there's more content
+        setTimeout(() => {
+            container.scrollTo({
+                top: 15,
+                behavior: 'smooth'
+            });
+            
+            setTimeout(() => {
+                container.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            }, 800);
+        }, 500);
     }
 
     // Load all slides
@@ -235,6 +303,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 // For slides with answer options, add the options container
                 const answerOptions = document.createElement('div');
                 answerOptions.className = 'answer-options';
+                
+                // Add a scroll indicator element
+                const scrollIndicator = document.createElement('div');
+                scrollIndicator.className = 'scroll-indicator';
+                scrollIndicator.innerHTML = '<div class="arrow"></div><span>Scrolla för fler alternativ</span>';
+                
+                // Position the scroll indicator at the bottom of the container
+                slide.appendChild(scrollIndicator);
                 
                 // Position the answer options at the bottom part of the image
                 // This will be adjusted when the image loads
@@ -392,6 +468,12 @@ document.addEventListener('DOMContentLoaded', function() {
             slide.classList.remove('active');
             if (parseInt(slide.dataset.slideIndex) === currentSlide + 1) {
                 slide.classList.add('active');
+                
+                // Check for overflow on the current slide's answer options
+                const answerOptions = slide.querySelector('.answer-options');
+                if (answerOptions) {
+                    setTimeout(() => checkForOverflow(answerOptions), 100);
+                }
             }
         });
         
